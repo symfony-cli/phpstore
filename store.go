@@ -32,7 +32,7 @@ func New(configDir string, reload bool, logger func(msg string, a ...interface{}
 		discoveryLogFunc: logger,
 	}
 	if reload {
-		os.Remove(filepath.Join(configDir, "php_versions_2.json"))
+		os.Remove(filepath.Join(configDir, "php_versions.json"))
 	}
 	s.loadVersions()
 	return s
