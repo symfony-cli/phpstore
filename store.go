@@ -156,7 +156,7 @@ func (s *PHPStore) fallbackVersion(warning string) (*Version, string, string, er
 // loadVersions returns all available PHP versions on this machine
 func (s *PHPStore) loadVersions() {
 	// disk cache?
-	cache := filepath.Join(s.configDir, "php_versions_2.json")
+	cache := filepath.Join(s.configDir, "php_versions.json")
 	if _, err := os.Stat(cache); err == nil {
 		if contents, err := ioutil.ReadFile(cache); err == nil {
 			var vs versions
