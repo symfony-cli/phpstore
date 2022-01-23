@@ -78,13 +78,8 @@ func (s *PHPStore) BestVersionForDir(dir string) (*Version, string, string, erro
 	// forced version?
 	if os.Getenv("FORCED_PHP_VERSION") != "" {
 		minorPHPVersion := strings.Join(strings.Split(os.Getenv("FORCED_PHP_VERSION"), ".")[0:2], ".")
-		forcedVersion, err := version.NewVersion(minorPHPVersion)
-		if err == nil {
-			for _, v := range s.versions {
-				if v.FullVersion.Equal(forcedVersion) {
-					return v, "internal forced version", "", nil
-				}
-			}
+		if _, err := version.NewVersion(minorPHPVersion); err == nil {
+			return s.bestVersion(minorPHPVersion, "internal forced version")
 		}
 	}
 
