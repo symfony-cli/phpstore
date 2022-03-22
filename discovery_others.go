@@ -23,6 +23,7 @@
 package phpstore
 
 import (
+	"bytes"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -82,5 +83,14 @@ func (s *PHPStore) doDiscover() {
 
 		// Remi's RPM repository
 		s.discoverFromDir("/opt/remi", nil, regexp.MustCompile("^php(?:\\d+)/root/usr$"), "Remi's RPM")
+	}
+
+	// asdf-vm
+	var buf bytes.Buffer
+	cmd := exec.Command("asdf", "where", "php")
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	if err := cmd.Run(); err == nil {
+		s.discoverFromDir(filepath.Dir(string(buf.Bytes()[:])), nil, nil, "asdf-vm")
 	}
 }
