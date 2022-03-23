@@ -91,6 +91,6 @@ func (s *PHPStore) doDiscover() {
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 	if err := cmd.Run(); err == nil {
-		s.discoverFromDir(filepath.Dir(string(buf.Bytes()[:])), nil, nil, "asdf-vm")
+		s.discoverFromDir(filepath.Dir(buf.String()), nil, nil, "asdf-vm")
 	}
 }
