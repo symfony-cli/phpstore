@@ -198,7 +198,13 @@ func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
 		FullVersion: v,
 		PHPPath:     php,
 	}
+
 	fpm := filepath.Join(dir, "sbin", strings.Replace(binName, "php", "php-fpm", 1))
+
+	if _, err := os.Stat(fpm); os.IsNotExist(err) {
+		fpm = filepath.Join(dir, "bin", strings.Replace(binName, "php", "php-fpm", 1))
+	}
+
 	cgi := filepath.Join(dir, "bin", strings.Replace(binName, "php", "php-cgi", 1))
 	phpconfig := filepath.Join(dir, "bin", strings.Replace(binName, "php", "php-config", 1))
 	phpize := filepath.Join(dir, "bin", strings.Replace(binName, "php", "phpize", 1))
