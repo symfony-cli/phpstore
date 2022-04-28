@@ -200,7 +200,6 @@ func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
 	}
 
 	fpm := filepath.Join(dir, "sbin", strings.Replace(binName, "php", "php-fpm", 1))
-
 	if _, err := os.Stat(fpm); os.IsNotExist(err) {
 		fpm = filepath.Join(dir, "bin", strings.Replace(binName, "php", "php-fpm", 1))
 	}
