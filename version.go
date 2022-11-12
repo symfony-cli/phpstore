@@ -33,6 +33,7 @@ const (
 	fpmServer serverType = iota
 	cgiServer
 	cliServer
+	frankenphpServer
 )
 
 // Version stores information about an installed PHP version
@@ -47,6 +48,7 @@ type Version struct {
 	PHPizePath    string           `json:"phpize_path"`
 	PHPdbgPath    string           `json:"phpdbg_path"`
 	IsSystem      bool             `json:"is_system"`
+	FrankenPHP    bool             `json:"frankenphp"`
 }
 
 type versions []*Version
@@ -56,21 +58,35 @@ func (vs versions) Swap(i, j int)      { vs[i], vs[j] = vs[j], vs[i] }
 func (vs versions) Less(i, j int) bool { return vs[i].FullVersion.LessThan(vs[j].FullVersion) }
 
 func (v *Version) ServerPath() string {
-	if v.serverType() == fpmServer {
+	switch v.serverType() {
+	case fpmServer:
 		return v.FPMPath
-	} else if v.serverType() == cgiServer {
+
+	case cgiServer:
 		return v.CGIPath
+
+	case frankenphpServer:
+		return ""
+
+	default:
+		return v.PHPPath
 	}
-	return v.PHPPath
 }
 
 func (v *Version) ServerTypeName() string {
-	if v.serverType() == fpmServer {
+	switch v.serverType() {
+	case fpmServer:
 		return "PHP FPM"
-	} else if v.serverType() == cgiServer {
+
+	case cgiServer:
 		return "PHP CGI"
+
+	case frankenphpServer:
+		return "FrankenPHP"
+
+	default:
+		return "PHP CLI"
 	}
-	return "PHP CLI"
 }
 
 func (v *Version) IsFPMServer() bool {
@@ -85,12 +101,21 @@ func (v *Version) IsCLIServer() bool {
 	return v.serverType() == cliServer
 }
 
+func (v *Version) IsFrankenPHPServer() bool {
+	return v.serverType() == frankenphpServer
+}
+
 func (v *Version) serverType() serverType {
+	if v.FrankenPHP {
+		return frankenphpServer
+	}
 	if v.FPMPath != "" {
 		return fpmServer
-	} else if v.CGIPath != "" {
+	}
+	if v.CGIPath != "" {
 		return cgiServer
 	}
+
 	return cliServer
 }
 
