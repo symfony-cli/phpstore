@@ -88,6 +88,20 @@ func (s *PHPStore) BestVersionForDir(dir string) (*Version, string, string, erro
 		return s.bestVersion(string(version), fmt.Sprintf(".php-version from current dir: %s", filepath.Join(foundDir, ".php-version")))
 	}
 
+	// composer.json for the currently executed PHP script and up
+	if version, foundDir := s.versionForDir(dir, "composer.json"); version != nil {
+		var composerJson struct {
+			Config struct {
+				Platform struct {
+					PHP string `json:"php"`
+				} `json:"platform"`
+			} `json:"config"`
+		}
+		if err := json.Unmarshal(version, &composerJson); err == nil && composerJson.Config.Platform.PHP != "" {
+			return s.bestVersion(composerJson.Config.Platform.PHP, fmt.Sprintf("composer.json from current dir: %s", filepath.Join(foundDir, "composer.json")))
+		}
+	}
+
 	// .php-version for the current working directory and up
 	wd, err := os.Getwd()
 	if err == nil {
