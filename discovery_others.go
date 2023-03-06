@@ -61,8 +61,8 @@ func (s *PHPStore) doDiscover() {
 		// homebrew
 		if out, err := exec.Command("brew", "--cellar").Output(); err == nil {
 			prefix := strings.Trim(string(out), "\n")
-			// pattern example: php@5.6/5.6.33_9
-			s.discoverFromDir(prefix, nil, regexp.MustCompile("^php@(?:[\\d\\.]+)/(?:[\\d\\._]+)$"), "homebrew")
+			// pattern example: php@8.0/8.0.28 or php@5.6/5.6.33_9 or php@7.4/7.4.33.reinstall
+			s.discoverFromDir(prefix, nil, regexp.MustCompile("^php@(?:[\\d\\.]+)/(?:[\\d\\.]+(?:_\\d+|\\.reinstall)?)$"), "homebrew")
 			// pattern example: php/7.2.11
 			s.discoverFromDir(prefix, nil, regexp.MustCompile("^php/(?:[\\d\\._]+)$"), "homebrew")
 		}
