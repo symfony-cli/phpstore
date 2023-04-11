@@ -30,7 +30,7 @@ import (
 	"runtime"
 	"strings"
 
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
 
@@ -140,6 +140,12 @@ func (s *PHPStore) discoverPHP(dir, binName string) *Version {
 		return s.discoverPHPViaPHP(dir, binName)
 	}
 
+	phpBin := filepath.Join(dir, "php")
+	_, phpBinErr := os.Lstat(phpBin)
+	if phpBinErr != nil {
+		return s.discoverPHPViaPHP(dir, binName)
+	}
+
 	phpConfigPath := filepath.Join(dir, "bin", strings.Replace(binName, "php", "php-config", 1))
 	fi, err := os.Lstat(phpConfigPath)
 	if err != nil {
@@ -157,14 +163,26 @@ func (s *PHPStore) discoverPHP(dir, binName string) *Version {
 }
 
 func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
-	php := filepath.Join(dir, "bin", binName)
+	var php string
 	if runtime.GOOS == "windows" {
 		binName += ".exe"
 		php = filepath.Join(dir, binName)
-	}
-
-	if _, err := os.Stat(php); err != nil {
-		return nil
+	} else {
+		var phpBinIsExist = 0
+		var phpBin = ""
+		phpBin = filepath.Join(dir, binName)
+		if _, err := os.Stat(phpBin); err == nil {
+			phpBinIsExist += 1
+			php = phpBin
+		}
+		phpBin = filepath.Join(dir, "bin", binName)
+		if _, err := os.Stat(phpBin); err == nil {
+			phpBinIsExist += 1
+			php = phpBin
+		}
+		if phpBinIsExist < 1 {
+			return nil
+		}
 	}
 
 	var buf bytes.Buffer
