@@ -43,10 +43,10 @@ func (s *PHPStore) discover() {
 	s.log("Looking for PHP in the PATH (%s)", paths)
 	for _, path := range paths {
 		for _, version := range s.findFromDir(path, nil, "PATH") {
-			idx := s.addVersion(version)
+			s.addVersion(version)
 			// the first one is the default/system PHP binary
 			if s.pathVersion == nil {
-				s.pathVersion = s.versions[idx]
+				s.pathVersion = version
 				s.pathVersion.IsSystem = true
 				s.log("  System PHP version (first in PATH)")
 			}

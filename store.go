@@ -216,7 +216,7 @@ func (s *PHPStore) loadVersions() {
 }
 
 // addVersion ensures that all versions are unique in the store
-func (s *PHPStore) addVersion(version *Version) int {
+func (s *PHPStore) addVersion(version *Version) {
 	idx, ok := s.seen[version.PHPPath]
 	sl, _ := filepath.EvalSymlinks(version.PHPPath)
 	// double-check to see if that's not just a symlink to another existing version
@@ -230,7 +230,7 @@ func (s *PHPStore) addVersion(version *Version) int {
 		if sl != "" {
 			s.seen[sl] = len(s.versions) - 1
 		}
-		return idx
+		return
 	}
 	currentScore := 0
 	if s.versions[idx].FPMPath != "" {
@@ -247,7 +247,6 @@ func (s *PHPStore) addVersion(version *Version) int {
 	if newScore > currentScore {
 		s.versions[idx] = version
 	}
-	return idx
 }
 
 // versionForDir returns the PHP version to use for a given directory
