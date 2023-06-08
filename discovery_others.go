@@ -57,16 +57,16 @@ func (s *PHPStore) doDiscover() {
 	// XAMPP
 	s.addFromDir("/opt/lampp", nil, "XAMPP")
 
-	if runtime.GOOS == "darwin" {
-		// homebrew
-		if out, err := exec.Command("brew", "--cellar").Output(); err == nil {
-			prefix := strings.Trim(string(out), "\n")
-			// pattern example: php@5.6/5.6.33_9
-			s.discoverFromDir(prefix, nil, regexp.MustCompile("^php@(?:[\\d\\.]+)/(?:[\\d\\._]+)$"), "homebrew")
-			// pattern example: php/7.2.11
-			s.discoverFromDir(prefix, nil, regexp.MustCompile("^php/(?:[\\d\\._]+)$"), "homebrew")
-		}
+	// homebrew
+	if out, err := exec.Command("brew", "--cellar").Output(); err == nil {
+		prefix := strings.Trim(string(out), "\n")
+		// pattern example: php@5.6/5.6.33_9
+		s.discoverFromDir(prefix, nil, regexp.MustCompile("^php@(?:[\\d\\.]+)/(?:[\\d\\._]+)$"), "homebrew")
+		// pattern example: php/7.2.11
+		s.discoverFromDir(prefix, nil, regexp.MustCompile("^php/(?:[\\d\\._]+)$"), "homebrew")
+	}
 
+	if runtime.GOOS == "darwin" {
 		// Liip PHP https://php-osx.liip.ch/ (pattern example: php5-7.2.0RC1-20170907-205032/bin/php)
 		s.discoverFromDir("/usr/local", nil, regexp.MustCompile("^php5\\-[\\d\\.]+(?:RC|BETA)?\\d*\\-\\d+\\-\\d+$"), "Liip PHP")
 
