@@ -230,7 +230,7 @@ func (s *PHPStore) addVersion(version *Version) int {
 		if sl != "" {
 			s.seen[sl] = len(s.versions) - 1
 		}
-		return idx
+		return len(s.versions) - 1
 	}
 	currentScore := 0
 	if s.versions[idx].FPMPath != "" {
