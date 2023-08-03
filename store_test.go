@@ -46,4 +46,15 @@ func TestBestVersion(t *testing.T) {
 			t.Error("8.0.10 requirement should trigger a warning")
 		}
 	}
+
+	{
+		bestVersion, _, warning, _ := store.bestVersion("8.0.99", "testing")
+		if bestVersion == nil {
+			t.Error("8.0.99 requirement should find a best version")
+		} else if bestVersion.Version != "8.0.27" {
+			t.Error("8.0.99 requirement should find 8.0.27 as best version")
+		} else if warning != "" {
+			t.Error("8.0.99 requirement should not trigger a warning")
+		}
+	}
 }
