@@ -147,9 +147,20 @@ func (s *PHPStore) BestVersionForDir(dir string) (*Version, string, string, erro
 func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, string, error) {
 	warning := ""
 
+	isPatchVersion := false
+	pos := strings.LastIndexByte(versionPrefix, '.')
+	if pos != strings.IndexByte(versionPrefix, '.') {
+		if "99" == versionPrefix[pos+1:] {
+			versionPrefix = versionPrefix[:pos]
+			pos = strings.LastIndexByte(versionPrefix, '.')
+		} else {
+			isPatchVersion = true
+		}
+	}
+
 	// Check if versionPrefix is actually a patch version, if so first do an
 	// exact match lookup and fallback to a minor version check
-	if pos := strings.LastIndexByte(versionPrefix, '.'); pos != strings.IndexByte(versionPrefix, '.') {
+	if isPatchVersion {
 		// look for an exact match, the order does not matter here
 		for _, v := range s.versions {
 			if v.Version == versionPrefix {
