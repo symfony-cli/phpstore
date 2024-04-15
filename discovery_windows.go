@@ -28,7 +28,7 @@ import (
 // see https://github.com/composer/windows-setup/blob/master/src/composer.iss
 func (s *PHPStore) doDiscover() {
 	systemDir := systemDir()
-	userProfileDir := userProfileDir()
+	userHomeDir := userHomeDir()
 
 	// XAMPP
 	s.addFromDir(filepath.Join(systemDir, "xampp", "php"), nil, "XAMPP")
@@ -48,8 +48,8 @@ func (s *PHPStore) doDiscover() {
 	s.discoverFromDir(filepath.Join(systemDir, "mamp", "bin", "php"), nil, regexp.MustCompile("^php[\\d\\.]+$"), "MAMP")
 
 	// Herd
-	if userProfileDir != "" {
-		s.discoverFromDir(filepath.Join(userProfileDir, ".config", "herd", "bin"), nil, regexp.MustCompile("^php\\d{2}$"), "Herd")
+	if userHomeDir != "" {
+		s.discoverFromDir(filepath.Join(userHomeDir, ".config", "herd", "bin"), nil, regexp.MustCompile("^php\\d{2}$"), "Herd")
 	}
 }
 
@@ -61,6 +61,10 @@ func systemDir() string {
 	return filepath.VolumeName(cwd) + "\\"
 }
 
-func userProfileDir() string {
-	return os.Getenv("USERPROFILE")
+func userHomeDir() string {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return userHomeDir
 }
