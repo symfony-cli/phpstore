@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -200,7 +199,7 @@ func (s *PHPStore) loadVersions() {
 	// disk cache?
 	cache := filepath.Join(s.configDir, "php_versions.json")
 	if _, err := os.Stat(cache); err == nil {
-		if contents, err := ioutil.ReadFile(cache); err == nil {
+		if contents, err := os.ReadFile(cache); err == nil {
 			var vs versions
 			if err := json.Unmarshal(contents, &vs); err == nil {
 				for _, v := range vs {
@@ -222,7 +221,7 @@ func (s *PHPStore) loadVersions() {
 	s.discover()
 	sort.Sort(s.versions)
 	if contents, err := json.MarshalIndent(s.versions, "", "    "); err == nil {
-		_ = ioutil.WriteFile(cache, contents, 0644)
+		_ = os.WriteFile(cache, contents, 0644)
 	}
 }
 
@@ -282,7 +281,7 @@ func (s *PHPStore) readVersion(file string) []byte {
 	if _, err := os.Stat(file); err != nil {
 		return nil
 	}
-	contents, err := ioutil.ReadFile(file)
+	contents, err := os.ReadFile(file)
 	if err != nil {
 		return nil
 	}
