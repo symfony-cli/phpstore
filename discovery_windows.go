@@ -21,14 +21,19 @@ package phpstore
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 )
 
 // see https://github.com/composer/windows-setup/blob/master/src/composer.iss
 func (s *PHPStore) doDiscover() {
 	systemDir := systemDir()
 	userHomeDir := userHomeDir()
+
+	// %PATH%
+	s.addFromEnv()
 
 	// XAMPP
 	s.addFromDir(filepath.Join(systemDir, "xampp", "php"), nil, "XAMPP")
@@ -51,6 +56,27 @@ func (s *PHPStore) doDiscover() {
 	if userHomeDir != "" {
 		s.discoverFromDir(filepath.Join(userHomeDir, ".config", "herd", "bin"), nil, regexp.MustCompile("^php\\d{2}$"), "Herd")
 	}
+}
+
+func (s *PHPStore) addFromEnv() {
+
+	// Determine the executable name based on the operating system
+	exeName := "php"
+	if runtime.GOOS == "windows" {
+		exeName = "php.exe"
+	}
+
+	// Alternative approach using exec.LookPath
+	phpPath, err := exec.LookPath(exeName)
+	if err != nil {
+		return
+	}
+
+	dir := filepath.Dir(phpPath)
+	if v := s.discoverPHP(dir, "php"); v != nil {
+		s.addVersion(v)
+	}
+
 }
 
 func systemDir() string {
