@@ -60,14 +60,7 @@ func (s *PHPStore) doDiscover() {
 
 func (s *PHPStore) addFromPath() {
 
-	// Determine the executable name based on the operating system
-	exeName := "php"
-	if runtime.GOOS == "windows" {
-		exeName = "php.exe"
-	}
-
-	// Alternative approach using exec.LookPath
-	phpPath, err := exec.LookPath(exeName)
+	phpPath, err := exec.LookPath("php.exe")
 	if err != nil {
 		return
 	}
