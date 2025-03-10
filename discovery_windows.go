@@ -58,7 +58,7 @@ func (s *PHPStore) doDiscover() {
 	}
 }
 
-func (s *PHPStore) addFromEnv() {
+func (s *PHPStore) addFromPath() {
 
 	// Determine the executable name based on the operating system
 	exeName := "php"
