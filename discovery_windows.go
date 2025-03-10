@@ -33,7 +33,7 @@ func (s *PHPStore) doDiscover() {
 	userHomeDir := userHomeDir()
 
 	// %PATH%
-	s.addFromEnv()
+	s.addFromPath()
 
 	// XAMPP
 	s.addFromDir(filepath.Join(systemDir, "xampp", "php"), nil, "XAMPP")
