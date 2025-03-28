@@ -72,11 +72,13 @@ func (s *PHPStore) addFromPath() {
 }
 
 func systemDir() string {
-	cwd, err := os.Getwd()
-	if err != nil {
+ 
+	val, ok := os.LookupEnv("SystemDrive")
+	if !ok {
 		return "C:\\"
 	}
-	return filepath.VolumeName(cwd) + "\\"
+
+	return val + string(os.PathSeparator)
 }
 
 func userHomeDir() string {
