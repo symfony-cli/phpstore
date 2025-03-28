@@ -24,7 +24,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 )
 
 // see https://github.com/composer/windows-setup/blob/master/src/composer.iss
