@@ -51,7 +51,7 @@ func (s *PHPStore) doDiscover() {
 
 	// phpenv
 	if homeDir != "" {
-		s.discoverFromDir(filepath.Join(homeDir, ".phpenv", "versions"), nil, regexp.MustCompile("^[\\d\\.]+(?:RC|BETA|snapshot)?$"), "phpenv")
+		s.discoverFromDir(filepath.Join(homeDir, ".phpenv", "versions"), nil, regexp.MustCompile(`^[\d\.]+(?:RC|BETA|snapshot)?$`), "phpenv")
 	}
 
 	// XAMPP
@@ -61,28 +61,28 @@ func (s *PHPStore) doDiscover() {
 	if out, err := exec.Command("brew", "--cellar").Output(); err == nil {
 		prefix := strings.Trim(string(out), "\n")
 		// pattern example: php@5.6/5.6.33_9
-		s.discoverFromDir(prefix, nil, regexp.MustCompile("^php@(?:[\\d\\.]+)/(?:[\\d\\._]+)$"), "homebrew")
+		s.discoverFromDir(prefix, nil, regexp.MustCompile(`^php@(?:[\d\.]+)/(?:[\d\._]+)$`), "homebrew")
 		// pattern example: php/7.2.11
-		s.discoverFromDir(prefix, nil, regexp.MustCompile("^php/(?:[\\d\\._]+)$"), "homebrew")
+		s.discoverFromDir(prefix, nil, regexp.MustCompile(`^php/(?:[\d\._]+)$`), "homebrew")
 	}
 
 	if runtime.GOOS == "darwin" {
 		// Liip PHP https://php-osx.liip.ch/ (pattern example: php5-7.2.0RC1-20170907-205032/bin/php)
-		s.discoverFromDir("/usr/local", nil, regexp.MustCompile("^php5\\-[\\d\\.]+(?:RC|BETA)?\\d*\\-\\d+\\-\\d+$"), "Liip PHP")
+		s.discoverFromDir("/usr/local", nil, regexp.MustCompile(`^php5\-[\d\.]+(?:RC|BETA)?\d*\-\d+\-\d+$`), "Liip PHP")
 
 		// MAMP
-		s.discoverFromDir("/Applications/MAMP/bin/php/", nil, regexp.MustCompile("^php[\\d\\.]+(?:RC|BETA)?$"), "MAMP")
+		s.discoverFromDir("/Applications/MAMP/bin/php/", nil, regexp.MustCompile(`^php[\d\.]+(?:RC|BETA)?$`), "MAMP")
 
 		// MacPorts (/opt/local/sbin/php-fpm71, /opt/local/bin/php71)
-		s.discoverFromDir("/opt/local", regexp.MustCompile("^php(?:[\\d\\.]+)$"), nil, "MacPorts")
+		s.discoverFromDir("/opt/local", regexp.MustCompile(`^php(?:[\d\.]+)$`), nil, "MacPorts")
 	}
 
 	if runtime.GOOS == "linux" {
 		// Ondrej PPA on Linux (bin/php7.2)
-		s.discoverFromDir("/usr", regexp.MustCompile("^php(?:[\\d\\.]+)$"), nil, "Ondrej PPA")
+		s.discoverFromDir("/usr", regexp.MustCompile(`^php(?:[\d\.]+)$`), nil, "Ondrej PPA")
 
 		// Remi's RPM repository
-		s.discoverFromDir("/opt/remi", nil, regexp.MustCompile("^php(?:\\d+)/root/usr$"), "Remi's RPM")
+		s.discoverFromDir("/opt/remi", nil, regexp.MustCompile(`^php(?:\d+)/root/usr$`), "Remi's RPM")
 	}
 
 	// asdf-vm
