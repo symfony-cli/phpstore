@@ -175,7 +175,7 @@ func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
 		s.log(`  Unable to run "%s --version: %s"`, php, err)
 		return nil
 	}
-	r := regexp.MustCompile("PHP (\\d+\\.\\d+\\.\\d+)")
+	r := regexp.MustCompile(`PHP (\d+\.\d+\.\d+)`)
 	data := r.FindSubmatch(buf.Bytes())
 	if data == nil {
 		s.log("  %s is not a PHP binary", php)
