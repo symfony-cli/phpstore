@@ -50,7 +50,7 @@ func New(configDir string, reload bool, logger func(msg string, a ...interface{}
 		discoveryLogFunc: logger,
 	}
 	if reload {
-		os.Remove(filepath.Join(configDir, "php_versions.json"))
+		_ = os.Remove(filepath.Join(configDir, "php_versions.json"))
 	}
 	s.loadVersions()
 	return s
@@ -149,7 +149,7 @@ func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, 
 	isPatchVersion := false
 	pos := strings.LastIndexByte(versionPrefix, '.')
 	if pos != strings.IndexByte(versionPrefix, '.') {
-		if "99" == versionPrefix[pos+1:] {
+		if versionPrefix[pos+1:] == "99" {
 			versionPrefix = versionPrefix[:pos]
 			pos = strings.LastIndexByte(versionPrefix, '.')
 		} else {
