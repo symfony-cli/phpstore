@@ -59,7 +59,7 @@ func (s *PHPStore) discoverFromDir(root string, phpRegexp *regexp.Regexp, pathRe
 	if pathRegexp != nil {
 		maxDepth += strings.Count(pathRegexp.String(), "/")
 	}
-	filepath.Walk(root, func(path string, finfo os.FileInfo, err error) error {
+	err := filepath.Walk(root, func(path string, finfo os.FileInfo, err error) error {
 		if err != nil {
 			// prevent panic by handling failure accessing a path
 			return nil
@@ -83,6 +83,9 @@ func (s *PHPStore) discoverFromDir(root string, phpRegexp *regexp.Regexp, pathRe
 		}
 		return nil
 	})
+	if err != nil {
+		s.log("error during %s discovery: %s", why, err)
+	}
 }
 
 func (s *PHPStore) addFromDir(dir string, phpRegexp *regexp.Regexp, why string) {
@@ -114,7 +117,7 @@ func (s *PHPStore) findFromDir(dir string, phpRegexp *regexp.Regexp, why string)
 	}
 
 	var versions []*Version
-	filepath.Walk(root, func(path string, finfo os.FileInfo, err error) error {
+	_ = filepath.Walk(root, func(path string, finfo os.FileInfo, err error) error {
 		if err != nil {
 			// prevent panic by handling failure accessing a path
 			return nil
@@ -175,7 +178,7 @@ func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
 		s.log(`  Unable to run "%s --version: %s"`, php, err)
 		return nil
 	}
-	r := regexp.MustCompile("PHP (\\d+\\.\\d+\\.\\d+)")
+	r := regexp.MustCompile(`PHP (\d+\.\d+\.\d+)`)
 	data := r.FindSubmatch(buf.Bytes())
 	if data == nil {
 		s.log("  %s is not a PHP binary", php)
