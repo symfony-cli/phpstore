@@ -36,7 +36,14 @@ import (
 
 // discover tries to find all PHP versions on the current machine
 func (s *PHPStore) discover() {
+	userHomeDir := userHomeDir()
+
 	s.doDiscover()
+
+	if userHomeDir != "" {
+		// Herd-lite
+		s.addFromDir(filepath.Join(userHomeDir, ".config", "herd-lite", "bin"), nil, "php.new (Herd-lite)")
+	}
 
 	// Under $PATH
 	paths := s.pathDirectories(s.configDir)
@@ -349,4 +356,12 @@ func (s *PHPStore) pathDirectories(configDir string) []string {
 		seen[edir] = true
 	}
 	return dirs
+}
+
+func userHomeDir() string {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return userHomeDir
 }
