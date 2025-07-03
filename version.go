@@ -30,10 +30,18 @@ import (
 type serverType int
 
 const (
-	fpmServer serverType = iota
-	cgiServer
+	noServerType serverType = iota
 	cliServer
+	cgiServer
+	fpmServer
 	frankenphpServer
+)
+
+const (
+	FlavorCLI        string = "cli"
+	FlavorCGI        string = "cgi"
+	FlavorFPM        string = "fpm"
+	FlavorFrankenPHP string = "frankenphp"
 )
 
 // Version stores information about an installed PHP version
@@ -49,6 +57,8 @@ type Version struct {
 	PHPdbgPath    string           `json:"phpdbg_path"`
 	IsSystem      bool             `json:"is_system"`
 	FrankenPHP    bool             `json:"frankenphp"`
+
+	typeOverride serverType
 }
 
 func NewVersion(v string) *Version {
@@ -113,8 +123,13 @@ func (v *Version) IsFrankenPHPServer() bool {
 }
 
 func (v *Version) serverType() serverType {
+	// FrankenPHP is a special case as it will not support several server types
+	// for a single installation.
 	if v.FrankenPHP {
 		return frankenphpServer
+	}
+	if v.typeOverride != noServerType {
+		return v.typeOverride
 	}
 	if v.FPMPath != "" {
 		return fpmServer
@@ -124,6 +139,46 @@ func (v *Version) serverType() serverType {
 	}
 
 	return cliServer
+}
+
+func (v *Version) ForceFlavor(flavor string) {
+	if flavor == "" {
+		return
+	}
+
+	switch flavor {
+	case FlavorCLI:
+		v.typeOverride = cliServer
+	case FlavorCGI:
+		v.typeOverride = cgiServer
+	case FlavorFPM:
+		v.typeOverride = fpmServer
+	}
+}
+
+func (v *Version) SupportsFlavor(flavor string) bool {
+	if flavor == "" {
+		return true
+	}
+
+	serverFlavor := v.serverType()
+	if serverFlavor == frankenphpServer {
+		return flavor == FlavorFrankenPHP
+	}
+
+	// CLI flavor is always supported
+	if flavor == FlavorCLI {
+		return true
+	}
+
+	switch serverFlavor {
+	case cgiServer:
+		return flavor == FlavorCGI
+	case fpmServer:
+		return flavor == FlavorFPM
+	}
+
+	return false
 }
 
 func (v *Version) setServer(fpm, cgi, phpconfig, phpize, phpdbg string) string {

@@ -2,6 +2,7 @@ package phpstore
 
 import (
 	"path/filepath"
+	"sort"
 	"testing"
 )
 
@@ -16,6 +17,20 @@ func TestBestVersion(t *testing.T) {
 			t.Errorf("Version %s should be shown as available", v)
 		}
 	}
+
+	{
+		v := "8.0.26"
+		ver := NewVersion(v)
+		ver.PHPPath = filepath.Join("/foo", v, "bin", "php")
+		ver.FPMPath = filepath.Join("/foo", v, "bin", "php-fpm")
+		store.addVersion(ver)
+
+		if !store.IsVersionAvailable(v) {
+			t.Errorf("Version %s should be shown as available", v)
+		}
+	}
+
+	sort.Sort(store.versions)
 
 	{
 		bestVersion, _, _, _ := store.bestVersion("8", "testing")
@@ -54,6 +69,19 @@ func TestBestVersion(t *testing.T) {
 			t.Errorf("8.0.99 requirement should find 8.0.27 as best version, got %s", bestVersion.Version)
 		} else if warning != "" {
 			t.Error("8.0.99 requirement should not trigger a warning")
+		}
+	}
+
+	{
+		bestVersion, _, warning, _ := store.bestVersion("8.0-fpm", "testing")
+		if bestVersion == nil {
+			t.Error("8.0-fpm requirement should find a best version")
+		} else if bestVersion.Version != "8.0.26" {
+			t.Errorf("8.0-fpm requirement should find 8.0.26 as best version, got %s", bestVersion.Version)
+		} else if bestVersion.serverType() != fpmServer {
+			t.Error("8.0-fpm requirement should find an FPM expectedFlavors")
+		} else if warning != "" {
+			t.Error("8.0-fpm requirement should not trigger a warning")
 		}
 	}
 }

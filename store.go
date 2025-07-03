@@ -143,21 +143,33 @@ func (s *PHPStore) BestVersionForDir(dir string) (*Version, string, string, erro
 }
 
 // bestVersion returns the latest patch version for the given major (X),
-// minor (X.Y), or patch (X.Y.Z). version can be 7 or 7.1 or 7.1.2.
-// Non-symlinked versions have priority
+// minor (X.Y), or patch (X.Y.Z).
+// Version can be 7 or 7.1 or 7.1.2 and optionally suffixed with a flavor.
+// Non-symlinked versions have priority.
+// If the asked version contains a flavor (e.g. "7.4-fpm"), it will only accept
+// versions supporting this flavor.
 // If the asked version is a patch one (X.Y.Z) and is not available, the lookup
 // will fallback to the last patch version for the minor version (X.Y).
 // There's no fallback to the major version because PHP is known to occasionally
 // break BC in minor versions, so we can't safely fall back.
 func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, string, error) {
 	warning := ""
+	flavor := ""
+
+	// Check if versionPrefix has a expectedFlavors constraint, if so first do an
+	// exact match lookup and fallback to a minor version check
+	if pos := strings.LastIndexByte(versionPrefix, '-'); pos != -1 {
+		flavor = versionPrefix[pos+1:]
+		versionPrefix = versionPrefix[:pos]
+	}
 
 	// Check if versionPrefix is actually a patch version, if so first do an
 	// exact match lookup and fallback to a minor version check
 	if pos := strings.LastIndexByte(versionPrefix, '.'); pos != strings.IndexByte(versionPrefix, '.') {
 		// look for an exact match, the order does not matter here
 		for _, v := range s.versions {
-			if v.Version == versionPrefix {
+			if v.Version == versionPrefix && v.SupportsFlavor(flavor) {
+				v.ForceFlavor(flavor)
 				return v, source, "", nil
 			}
 		}
@@ -173,7 +185,8 @@ func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, 
 	// start from the end as versions are always sorted
 	for i := len(s.versions) - 1; i >= 0; i-- {
 		v := s.versions[i]
-		if strings.HasPrefix(v.Version, versionPrefix) {
+		if strings.HasPrefix(v.Version, versionPrefix) && v.SupportsFlavor(flavor) {
+			v.ForceFlavor(flavor)
 			return v, source, warning, nil
 		}
 	}
