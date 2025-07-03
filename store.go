@@ -136,30 +136,19 @@ func (s *PHPStore) BestVersionForDir(dir string) (*Version, string, string, erro
 	return s.fallbackVersion("")
 }
 
-// bestVersion returns the latest patch version for the given major (X), minor (X.Y), or patch (X.Y.Z)
-// version can be 7 or 7.1 or 7.1.2
-// non-symlinked versions have priority
+// bestVersion returns the latest patch version for the given major (X),
+// minor (X.Y), or patch (X.Y.Z). version can be 7 or 7.1 or 7.1.2.
+// Non-symlinked versions have priority
 // If the asked version is a patch one (X.Y.Z) and is not available, the lookup
-// will fallback to the last path version for the minor version (X.Y).
+// will fallback to the last patch version for the minor version (X.Y).
 // There's no fallback to the major version because PHP is known to occasionally
 // break BC in minor versions, so we can't safely fall back.
 func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, string, error) {
 	warning := ""
 
-	isPatchVersion := false
-	pos := strings.LastIndexByte(versionPrefix, '.')
-	if pos != strings.IndexByte(versionPrefix, '.') {
-		if versionPrefix[pos+1:] == "99" {
-			versionPrefix = versionPrefix[:pos]
-			pos = strings.LastIndexByte(versionPrefix, '.')
-		} else {
-			isPatchVersion = true
-		}
-	}
-
 	// Check if versionPrefix is actually a patch version, if so first do an
 	// exact match lookup and fallback to a minor version check
-	if isPatchVersion {
+	if pos := strings.LastIndexByte(versionPrefix, '.'); pos != strings.IndexByte(versionPrefix, '.') {
 		// look for an exact match, the order does not matter here
 		for _, v := range s.versions {
 			if v.Version == versionPrefix {
@@ -169,7 +158,9 @@ func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, 
 
 		// exact match not found, fallback to minor version check
 		newVersionPrefix := versionPrefix[:pos]
-		warning = fmt.Sprintf(`the current dir requires PHP %s (%s), but this version is not available: fallback to %s`, versionPrefix, source, newVersionPrefix)
+		if versionPrefix[pos+1:] != "99" {
+			warning = fmt.Sprintf(`the current dir requires PHP %s (%s), but this version is not available: fallback to %s`, versionPrefix, source, newVersionPrefix)
+		}
 		versionPrefix = newVersionPrefix
 	}
 
