@@ -51,6 +51,13 @@ type Version struct {
 	FrankenPHP    bool             `json:"frankenphp"`
 }
 
+func NewVersion(v string) *Version {
+	return &Version{
+		Version:     v,
+		FullVersion: version.Must(version.NewVersion(v)),
+	}
+}
+
 type versions []*Version
 
 func (vs versions) Len() int           { return len(vs) }

@@ -44,16 +44,22 @@ type PHPStore struct {
 
 // New creates a new PHP store
 func New(configDir string, reload bool, logger func(msg string, a ...interface{})) *PHPStore {
-	s := &PHPStore{
-		configDir:        configDir,
-		seen:             make(map[string]int),
-		discoveryLogFunc: logger,
-	}
+	s := newEmpty(configDir, logger)
+
 	if reload {
 		_ = os.Remove(filepath.Join(configDir, "php_versions.json"))
 	}
 	s.loadVersions()
 	return s
+}
+
+// newEmpty creates a new "empty" (without loading versions) PHP store
+func newEmpty(configDir string, logger func(msg string, a ...interface{})) *PHPStore {
+	return &PHPStore{
+		configDir:        configDir,
+		seen:             make(map[string]int),
+		discoveryLogFunc: logger,
+	}
 }
 
 // Versions returns all available PHP versions
