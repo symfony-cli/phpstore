@@ -60,11 +60,3 @@ func systemDir() string {
 	}
 	return filepath.VolumeName(cwd) + "\\"
 }
-
-func userHomeDir() string {
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-	return userHomeDir
-}
