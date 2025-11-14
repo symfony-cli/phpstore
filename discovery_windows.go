@@ -21,6 +21,7 @@ package phpstore
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 )
@@ -29,6 +30,9 @@ import (
 func (s *PHPStore) doDiscover() {
 	systemDir := systemDir()
 	userHomeDir := userHomeDir()
+
+	// %PATH%
+	s.addFromPath()
 
 	// XAMPP
 	s.addFromDir(filepath.Join(systemDir, "xampp", "php"), nil, "XAMPP")
@@ -53,10 +57,26 @@ func (s *PHPStore) doDiscover() {
 	}
 }
 
-func systemDir() string {
-	cwd, err := os.Getwd()
+func (s *PHPStore) addFromPath() {
+
+	phpPath, err := exec.LookPath("php.exe")
 	if err != nil {
+		return
+	}
+
+	dir := filepath.Dir(phpPath)
+	if v := s.discoverPHP(dir, "php"); v != nil {
+		s.addVersion(v)
+	}
+
+}
+
+func systemDir() string {
+ 
+	val, ok := os.LookupEnv("SystemDrive")
+	if !ok {
 		return "C:\\"
 	}
-	return filepath.VolumeName(cwd) + "\\"
+
+	return val + string(os.PathSeparator)
 }
