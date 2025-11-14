@@ -38,7 +38,7 @@ import (
 func (s *PHPStore) discover() {
 	s.doDiscover()
 
-	if userHomeDir := userHomeDir();  userHomeDir != "" {
+	if userHomeDir := userHomeDir(); userHomeDir != "" {
 		// Herd-lite
 		s.addFromDir(filepath.Join(userHomeDir, ".config", "herd-lite", "bin"), nil, "php.new (Herd-lite)")
 	}
