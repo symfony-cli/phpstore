@@ -156,7 +156,7 @@ func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, 
 	warning := ""
 	flavor := ""
 
-	// Check if versionPrefix has a expectedFlavors constraint, if so first do an
+	// Check if versionPrefix has an expected-flavor constraint, if so first do an
 	// exact match lookup and fallback to a minor version check
 	if pos := strings.LastIndexByte(versionPrefix, '-'); pos != -1 {
 		flavor = versionPrefix[pos+1:]
