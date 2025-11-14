@@ -44,16 +44,22 @@ type PHPStore struct {
 
 // New creates a new PHP store
 func New(configDir string, reload bool, logger func(msg string, a ...interface{})) *PHPStore {
-	s := &PHPStore{
-		configDir:        configDir,
-		seen:             make(map[string]int),
-		discoveryLogFunc: logger,
-	}
+	s := newEmpty(configDir, logger)
+
 	if reload {
 		_ = os.Remove(filepath.Join(configDir, "php_versions.json"))
 	}
 	s.loadVersions()
 	return s
+}
+
+// newEmpty creates a new "empty" (without loading versions) PHP store
+func newEmpty(configDir string, logger func(msg string, a ...interface{})) *PHPStore {
+	return &PHPStore{
+		configDir:        configDir,
+		seen:             make(map[string]int),
+		discoveryLogFunc: logger,
+	}
 }
 
 // Versions returns all available PHP versions
@@ -136,47 +142,51 @@ func (s *PHPStore) BestVersionForDir(dir string) (*Version, string, string, erro
 	return s.fallbackVersion("")
 }
 
-// bestVersion returns the latest patch version for the given major (X), minor (X.Y), or patch (X.Y.Z)
-// version can be 7 or 7.1 or 7.1.2
-// non-symlinked versions have priority
+// bestVersion returns the latest patch version for the given major (X),
+// minor (X.Y), or patch (X.Y.Z).
+// Version can be 7 or 7.1 or 7.1.2 and optionally suffixed with a flavor.
+// Non-symlinked versions have priority.
+// If the asked version contains a flavor (e.g. "7.4-fpm"), it will only accept
+// versions supporting this flavor.
 // If the asked version is a patch one (X.Y.Z) and is not available, the lookup
-// will fallback to the last path version for the minor version (X.Y).
+// will fallback to the last patch version for the minor version (X.Y).
 // There's no fallback to the major version because PHP is known to occasionally
 // break BC in minor versions, so we can't safely fall back.
 func (s *PHPStore) bestVersion(versionPrefix, source string) (*Version, string, string, error) {
 	warning := ""
+	flavor := ""
 
-	isPatchVersion := false
-	pos := strings.LastIndexByte(versionPrefix, '.')
-	if pos != strings.IndexByte(versionPrefix, '.') {
-		if versionPrefix[pos+1:] == "99" {
-			versionPrefix = versionPrefix[:pos]
-			pos = strings.LastIndexByte(versionPrefix, '.')
-		} else {
-			isPatchVersion = true
-		}
+	// Check if versionPrefix has an expected-flavor constraint, if so first do an
+	// exact match lookup and fallback to a minor version check
+	if pos := strings.LastIndexByte(versionPrefix, '-'); pos != -1 {
+		flavor = versionPrefix[pos+1:]
+		versionPrefix = versionPrefix[:pos]
 	}
 
 	// Check if versionPrefix is actually a patch version, if so first do an
 	// exact match lookup and fallback to a minor version check
-	if isPatchVersion {
+	if pos := strings.LastIndexByte(versionPrefix, '.'); pos != strings.IndexByte(versionPrefix, '.') {
 		// look for an exact match, the order does not matter here
 		for _, v := range s.versions {
-			if v.Version == versionPrefix {
+			if v.Version == versionPrefix && v.SupportsFlavor(flavor) {
+				v.ForceFlavor(flavor)
 				return v, source, "", nil
 			}
 		}
 
 		// exact match not found, fallback to minor version check
 		newVersionPrefix := versionPrefix[:pos]
-		warning = fmt.Sprintf(`the current dir requires PHP %s (%s), but this version is not available: fallback to %s`, versionPrefix, source, newVersionPrefix)
+		if versionPrefix[pos+1:] != "99" {
+			warning = fmt.Sprintf(`the current dir requires PHP %s (%s), but this version is not available: fallback to %s`, versionPrefix, source, newVersionPrefix)
+		}
 		versionPrefix = newVersionPrefix
 	}
 
 	// start from the end as versions are always sorted
 	for i := len(s.versions) - 1; i >= 0; i-- {
 		v := s.versions[i]
-		if strings.HasPrefix(v.Version, versionPrefix) {
+		if strings.HasPrefix(v.Version, versionPrefix) && v.SupportsFlavor(flavor) {
+			v.ForceFlavor(flavor)
 			return v, source, warning, nil
 		}
 	}
