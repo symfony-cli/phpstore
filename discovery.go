@@ -323,6 +323,7 @@ func normalizeVersion(v string) string {
 
 func (s *PHPStore) pathDirectories(configDir string) []string {
 	phpShimDir := filepath.Join(configDir, "bin")
+	additionalPath := os.Getenv("SYMFONY_CLI_PHP_PATH")
 	path := os.Getenv("PATH")
 	if runtime.GOOS == "windows" {
 		path = os.Getenv("Path")
@@ -330,7 +331,7 @@ func (s *PHPStore) pathDirectories(configDir string) []string {
 	user := os.Getenv("USERPROFILE")
 	dirs := []string{}
 	seen := make(map[string]bool)
-	for _, dir := range filepath.SplitList(path) {
+	for _, dir := range filepath.SplitList(additionalPath + string(filepath.ListSeparator) + path) {
 		dir = strings.Replace(dir, "%%USERPROFILE%%", user, 1)
 		edir, err := evalSymlinks(dir)
 		if err != nil {
