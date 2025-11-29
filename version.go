@@ -185,35 +185,35 @@ func (v *Version) setServer(fpm, cgi, phpconfig, phpize, phpdbg string) string {
 	msg := fmt.Sprintf("  Found PHP: %s", v.PHPPath)
 	fpm = filepath.Clean(fpm)
 	if _, err := os.Stat(fpm); err == nil {
-		if fpm, err := filepath.EvalSymlinks(fpm); err == nil {
+		if fpm, err := evalSymlinks(fpm); err == nil {
 			v.FPMPath = fpm
 			msg += fmt.Sprintf(", with FPM: %s", fpm)
 		}
 	}
 	cgi = filepath.Clean(cgi)
 	if _, err := os.Stat(cgi); err == nil {
-		if cgi, err := filepath.EvalSymlinks(cgi); err == nil {
+		if cgi, err := evalSymlinks(cgi); err == nil {
 			v.CGIPath = cgi
 			msg += fmt.Sprintf(", with CGI: %s", cgi)
 		}
 	}
 	phpconfig = filepath.Clean(phpconfig)
 	if _, err := os.Stat(phpconfig); err == nil {
-		if phpconfig, err := filepath.EvalSymlinks(phpconfig); err == nil {
+		if phpconfig, err := evalSymlinks(phpconfig); err == nil {
 			v.PHPConfigPath = phpconfig
 			msg += fmt.Sprintf(", with php-config: %s", phpconfig)
 		}
 	}
 	phpize = filepath.Clean(phpize)
 	if _, err := os.Stat(phpize); err == nil {
-		if phpize, err := filepath.EvalSymlinks(phpize); err == nil {
+		if phpize, err := evalSymlinks(phpize); err == nil {
 			v.PHPizePath = phpize
 			msg += fmt.Sprintf(", with phpize: %s", phpize)
 		}
 	}
 	phpdbg = filepath.Clean(phpdbg)
 	if _, err := os.Stat(phpdbg); err == nil {
-		if phpdbg, err := filepath.EvalSymlinks(phpdbg); err == nil {
+		if phpdbg, err := evalSymlinks(phpdbg); err == nil {
 			v.PHPdbgPath = phpdbg
 			msg += fmt.Sprintf(", with phpdbg: %s", phpdbg)
 		}

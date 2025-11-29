@@ -191,7 +191,7 @@ func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
 	}
 	php = filepath.Clean(php)
 	var err error
-	php, err = filepath.EvalSymlinks(php)
+	php, err = evalSymlinks(php)
 	if err != nil {
 		s.log("  %s is not a valid symlink", php)
 		return nil
@@ -332,7 +332,7 @@ func (s *PHPStore) pathDirectories(configDir string) []string {
 	seen := make(map[string]bool)
 	for _, dir := range filepath.SplitList(path) {
 		dir = strings.Replace(dir, "%%USERPROFILE%%", user, 1)
-		edir, err := filepath.EvalSymlinks(dir)
+		edir, err := evalSymlinks(dir)
 		if err != nil {
 			continue
 		}
