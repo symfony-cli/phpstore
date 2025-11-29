@@ -238,7 +238,7 @@ func (s *PHPStore) loadVersions() {
 // addVersion ensures that all versions are unique in the store
 func (s *PHPStore) addVersion(version *Version) int {
 	idx, ok := s.seen[version.PHPPath]
-	sl, _ := filepath.EvalSymlinks(version.PHPPath)
+	sl, _ := evalSymlinks(version.PHPPath)
 	// double-check to see if that's not just a symlink to another existing version
 	if !ok && sl != "" {
 		idx, ok = s.seen[sl]
