@@ -35,5 +35,5 @@ func evalSymlinks(path string) (string, error) {
 	}
 
 	// If exists, we make the path cleaned before being used
-	return filepath.Abs(path), nil
+	return filepath.Abs(path)
 }
