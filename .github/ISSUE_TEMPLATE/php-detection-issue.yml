@@ -1,0 +1,247 @@
+name: PHP Installation Detection Issue
+description: Report when Symfony CLI cannot detect your PHP installation
+labels: Bug
+assignees: [tucksaun]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before You Start
+        
+        Please try these steps first - they resolve most issues:
+        
+        - **Update Symfony CLI**: Ensure you're using the latest version:
+          - **Homebrew (macOS)**: `brew upgrade symfony-cli`
+          - **APT (Ubuntu/Debian)**: `sudo apt update && sudo apt upgrade symfony-cli`
+          - **Scoop (Windows)**: `scoop update symfony-cli`
+          - **Other methods**: See [Symfony CLI installation docs](https://symfony.com/doc/current/setup/symfony_cli.html)
+        - **Clear cache**: Delete the cache file at `~/.symfony5/php_versions.json` (or `%USERPROFILE%\.symfony5\php_versions.json` on Windows) and try again
+        - **Locate your PHP installation**: Find where PHP is installed on your system. If `php` is not in your PATH, use the full path to the PHP binary (e.g., `/usr/local/bin/php`, `/Applications/MAMP/bin/php/php8.2.0/bin/php`, or `C:\xampp\php\php.exe`)
+        - **Check custom PHP path**: If PHP is in a non-standard location, try setting the `SYMFONY_CLI_PHP_PATH` environment variable to include the directory containing your PHP installation
+        
+        If the issue persists after these steps, please continue with the form below.
+
+  - type: checkboxes
+    id: self_check
+    attributes:
+      label: Self-Check Steps
+      description: Please confirm you have tried these troubleshooting steps
+      options:
+        - label: I have updated Symfony CLI to the latest version
+          required: true
+        - label: I have cleared the PHP versions cache
+          required: true
+        - label: I have located my PHP installation(s) and know the full path(s) to the PHP binary(ies)
+          required: true
+        - label: I have checked/configured the `SYMFONY_CLI_PHP_PATH` environment variable if needed
+          required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Issue Description
+
+  - type: textarea
+    id: php_installation
+    attributes:
+      label: What PHP installation is not being detected?
+      description: Describe the PHP installation that should be detected (e.g., "PHP 8.2 installed via Homebrew" or "PHP 7.4 from XAMPP")
+      placeholder: e.g., PHP 8.2 installed via Homebrew
+    validations:
+      required: true
+
+  - type: input
+    id: command
+    attributes:
+      label: What command are you running when the issue occurs?
+      description: The Symfony CLI command that triggers the detection issue
+      placeholder: e.g., symfony local:php:list, symfony server:start
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## System Information
+
+  - type: input
+    id: operating_system
+    attributes:
+      label: Operating System
+      description: Your operating system and version
+      placeholder: e.g., macOS 13.0, Windows 11, Ubuntu 22.04
+    validations:
+      required: true
+
+  - type: input
+    id: symfony_cli_version
+    attributes:
+      label: Symfony CLI Version
+      description: Run `symfony -V` and paste the output here
+      placeholder: e.g., Symfony CLI version 5.16.1 
+    validations:
+      required: true
+
+  - type: textarea
+    id: php_installations
+    attributes:
+      label: PHP Installation(s) - Path and Version
+      description: |
+        Provide the path(s) and version(s) of your PHP installation(s). `php-config` is preferred as it provides both path and version information in one place.
+        
+        **Using php-config (preferred):**
+        - Path to php-config: `/usr/local/bin/php-config` or `C:\xampp\php\php-config.exe`
+        - Run: `/usr/local/bin/php-config --version` (outputs version like "8.2.0")
+        - PHP binary path: Run `php-config --php-binary` to get the path (e.g., `/usr/local/bin/php` or `C:\xampp\php\php.exe`)
+        - PHP SAPIs: Run `php-config --php-sapis` to list the Server APIs supported by this PHP build (e.g., "cli fpm apache2handler")
+        
+        **Fallback using php -v:**
+        - If `php-config` is not available, use the PHP binary directly
+        - Path to php: `/usr/local/bin/php` or `C:\xampp\php\php.exe`
+        - Run: `/usr/local/bin/php -v` and paste the full output
+        
+        **Format for each installation:**
+        ```
+        php-config path: /usr/local/bin/php-config
+        php-config --version: 8.2.0
+        php-config --php-binary: /usr/local/bin/php
+        php-config --php-sapis: cli fpm apache2handler
+        ```
+        
+        If you have multiple PHP versions, list each one separately with all the information above.
+      placeholder: |
+        #### Installation 1:
+        php-config path: /usr/local/bin/php-config
+        php-config --version: 8.2.0
+        php-config --php-binary: /usr/local/bin/php
+        php-config --php-sapis: cli fpm apache2handler
+        
+        #### Installation 2 (if php-config not available):
+        PHP binary path: /Applications/MAMP/bin/php/php8.1.0/bin/php
+        php -v output:
+        PHP 8.1.0 (cli) (built: Dec  6 2022 15:31:23) ( NTS )
+        Copyright (c) The PHP Group
+        ...
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Debug Information
+        
+        **Please run the following command and paste the complete output:**
+        
+        ```bash
+        symfony local:php:list -vvv
+        ```
+        
+        This command provides verbose output including discovery logs that are crucial for troubleshooting.
+
+  - type: textarea
+    id: debug_output
+    attributes:
+      label: Output of `symfony local:php:list -vvv`
+      description: Paste the complete output of the command above, including all verbose discovery logs
+      render: shell
+      placeholder: |
+        [Paste the complete output here]
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_diagnostics
+    attributes:
+      label: Additional Diagnostic Information
+      description: |
+        Run these commands and paste the output. Note: If `php` is not in your PATH, replace `php` with the full path to your PHP binary.
+        
+        **On Unix/macOS:**
+        ```bash
+        echo $PATH
+        echo $SYMFONY_CLI_PHP_PATH
+        php -v 2>&1 || echo "php command not found - PHP is not in PATH"
+        which php 2>&1 || echo "php not found in PATH"
+        # If php is not in PATH, try with full path:
+        # /path/to/php -v
+        ```
+        
+        **On Windows (PowerShell):**
+        ```powershell
+        $env:PATH
+        $env:SYMFONY_CLI_PHP_PATH
+        php -v 2>&1
+        where.exe php 2>&1
+        # If php is not in PATH, try with full path:
+        # C:\path\to\php.exe -v
+        ```
+      render: shell
+      placeholder: |
+        [Paste the output here]
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Additional Context
+
+  - type: textarea
+    id: error_messages
+    attributes:
+      label: Are there any error messages?
+      description: If yes, please paste them here
+      placeholder: |
+        [Paste any error messages here]
+    validations:
+      required: false
+
+  - type: textarea
+    id: previous_behavior
+    attributes:
+      label: Did this work before?
+      description: If yes, what changed? (e.g., updated Symfony CLI, updated PHP, changed system configuration)
+      placeholder: |
+        [Describe if this worked previously and what changed]
+    validations:
+      required: false
+
+  - type: textarea
+    id: other_info
+    attributes:
+      label: Any other relevant information
+      description: Add any other context, screenshots, or information that might help
+      placeholder: |
+        [Any additional information]
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Final Checklist
+        
+        Please confirm you have provided all the necessary information:
+
+  - type: checkboxes
+    id: information_checklist
+    attributes:
+      label: Information Checklist
+      description: Confirm you have provided all required information
+      options:
+        - label: I have updated Symfony CLI to the latest version
+          required: true
+        - label: I have cleared the PHP versions cache
+          required: true
+        - label: I have provided the output of `symfony local:php:list -vvv`
+          required: true
+        - label: I have provided system information (OS, Symfony CLI version)
+          required: true
+        - label: I have provided PHP installation path(s) and version(s) (preferably using php-config)
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report this issue! The debug information you provide helps us diagnose and fix detection issues more efficiently.
