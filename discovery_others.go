@@ -68,16 +68,20 @@ func (s *PHPStore) doDiscover() {
 	}
 
 	// Nix (https://nixos.org/): PHP built with its extensions is stored as
-	// /nix/store/<hash>-php-with-extensions-<version>. Because /nix/store can
-	// hold thousands of unrelated packages, glob the matching entries directly
-	// instead of walking the whole tree.
-	if dirs, err := filepath.Glob("/nix/store/*-php-with-extensions-*"); err == nil {
-		for _, dir := range dirs {
-			// skip .drv files and any other non-directory matches
-			if fi, err := os.Stat(dir); err != nil || !fi.IsDir() {
-				continue
+	// <store>/<hash>-php-with-extensions-<version>. The store directory
+	// defaults to /nix/store but can be relocated, so ask Nix for its location.
+	if out, err := exec.Command("nix", "eval", "--raw", "--expr", "builtins.storeDir").Output(); err == nil {
+		if storeDir := strings.TrimSpace(string(out)); storeDir != "" {
+			// The store can hold thousands of unrelated packages, so glob the
+			// matching entries directly instead of walking the whole tree.
+			dirs, _ := filepath.Glob(filepath.Join(storeDir, "*-php-with-extensions-*"))
+			for _, dir := range dirs {
+				// skip .drv files and any other non-directory matches
+				if fi, err := os.Stat(dir); err != nil || !fi.IsDir() {
+					continue
+				}
+				s.addFromDir(dir, nil, "Nix")
 			}
-			s.addFromDir(dir, nil, "Nix")
 		}
 	}
 
