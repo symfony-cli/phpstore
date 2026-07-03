@@ -24,6 +24,7 @@ package phpstore
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -64,6 +65,20 @@ func (s *PHPStore) doDiscover() {
 		s.discoverFromDir(prefix, nil, regexp.MustCompile(`^php@(?:[\d\.]+)/(?:[\d\._]+)$`), "homebrew")
 		// pattern example: php/7.2.11
 		s.discoverFromDir(prefix, nil, regexp.MustCompile(`^php/(?:[\d\._]+)$`), "homebrew")
+	}
+
+	// Nix (https://nixos.org/): PHP built with its extensions is stored as
+	// /nix/store/<hash>-php-with-extensions-<version>. Because /nix/store can
+	// hold thousands of unrelated packages, glob the matching entries directly
+	// instead of walking the whole tree.
+	if dirs, err := filepath.Glob("/nix/store/*-php-with-extensions-*"); err == nil {
+		for _, dir := range dirs {
+			// skip .drv files and any other non-directory matches
+			if fi, err := os.Stat(dir); err != nil || !fi.IsDir() {
+				continue
+			}
+			s.addFromDir(dir, nil, "Nix")
+		}
 	}
 
 	if runtime.GOOS == "darwin" {
