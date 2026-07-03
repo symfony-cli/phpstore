@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by fabpot at 2026-07-03T13:21:45Z
+
+Do we need to fallback to `/nix/store` if nix eval fails?
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2026-07-03T15:33:43Z
+
+> Do we need to fallback to `/nix/store` if nix eval fails?
+
+we could but I dont think it's worth it: if `nix eval` fails the user probably has bigger problems than being able to run php using the Symfony CLI
