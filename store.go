@@ -33,6 +33,9 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// PHPBinaryPathEnvVar overrides automatic PHP version selection with an absolute PHP CLI binary path.
+const PHPBinaryPathEnvVar = "SYMFONY_CLI_PHP_BINARY_PATH"
+
 // PHPStore stores information about all locally installed PHP versions
 type PHPStore struct {
 	configDir        string
@@ -40,6 +43,7 @@ type PHPStore struct {
 	pathVersion      *Version
 	seen             map[string]int
 	discoveryLogFunc func(msg string, a ...interface{})
+	phpVersionOutput func(string) ([]byte, error)
 }
 
 // New creates a new PHP store
@@ -59,6 +63,7 @@ func newEmpty(configDir string, logger func(msg string, a ...interface{})) *PHPS
 		configDir:        configDir,
 		seen:             make(map[string]int),
 		discoveryLogFunc: logger,
+		phpVersionOutput: runPHPVersion,
 	}
 }
 
@@ -80,6 +85,18 @@ func (s *PHPStore) IsVersionAvailable(version string) bool {
 
 // BestVersionForDir returns the configured PHP version for the given PHP script
 func (s *PHPStore) BestVersionForDir(dir string) (*Version, string, string, error) {
+	if binaryPath := os.Getenv(PHPBinaryPathEnvVar); binaryPath != "" {
+		source := PHPBinaryPathEnvVar + " environment variable"
+		selected, err := s.discoverPHPPath(binaryPath)
+		if err != nil {
+			return nil, source, "", errors.Wrapf(err, "invalid %s", PHPBinaryPathEnvVar)
+		}
+		selected = s.versions[s.addVersion(selected)]
+		s.sortVersions()
+
+		return selected, source, "PHP version selection is overridden by " + PHPBinaryPathEnvVar, nil
+	}
+
 	// forced version?
 	if os.Getenv("FORCED_PHP_VERSION") != "" {
 		minorPHPVersion := strings.Join(strings.Split(os.Getenv("FORCED_PHP_VERSION"), ".")[0:2], ".")
@@ -223,15 +240,26 @@ func (s *PHPStore) loadVersions() {
 					}
 					s.versions = append(s.versions, v)
 				}
-				sort.Sort(s.versions)
+				s.sortVersions()
 				return
 			}
 		}
 	}
 	s.discover()
-	sort.Sort(s.versions)
+	s.sortVersions()
 	if contents, err := json.MarshalIndent(s.versions, "", "    "); err == nil {
 		_ = os.WriteFile(cache, contents, 0644)
+	}
+}
+
+func (s *PHPStore) sortVersions() {
+	sort.Sort(s.versions)
+	s.seen = make(map[string]int, len(s.versions))
+	for idx, version := range s.versions {
+		s.seen[version.PHPPath] = idx
+		if symlink, err := evalSymlinks(version.PHPPath); err == nil {
+			s.seen[symlink] = idx
+		}
 	}
 }
 
