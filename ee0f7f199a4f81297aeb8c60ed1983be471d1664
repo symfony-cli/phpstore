@@ -1,0 +1,24 @@
+---------------------------------------------------------------------------
+
+by upsun-dispatch[bot] at 2026-08-03T20:11:09Z
+
+<!-- dispatch-summary -->
+**📋 PR Summary**
+
+This PR adds a `SYMFONY_CLI_PHP_BINARY_PATH` environment variable that lets users force a specific absolute PHP CLI binary path, bypassing automatic version selection (resolving issue #599 where multiple installations share the same version). It refactors PHP discovery in `discovery.go` into a reusable `inspectPHPBinary` helper plus a new `discoverPHPPath` entry point, injects the `--version` runner via a `phpVersionOutput` field for testability, and adds a `sortVersions` helper that rebuilds the `seen` index after sorting.
+
+<details>
+<summary>Changes</summary>
+
+| Layer / File(s) | Summary |
+|---|---|
+| **override entry point** | |
+| `store.go` | Adds the `PHPBinaryPathEnvVar` constant and a highest-priority branch in `BestVersionForDir` that discovers and selects the overridden binary; extracts `sortVersions` which now rebuilds the `seen` map after each sort. |
+| **discovery refactor** | |
+| `discovery.go` | Splits binary inspection into `inspectPHPBinary`, adds `discoverPHPPath` for absolute/standalone binaries, and extracts `runPHPVersion` behind the injectable `phpVersionOutput` field. |
+| **tests** | |
+| `store_test.go` | Adds tests covering the override happy path, symlink resolution, standalone binaries, and rejection of relative / non-PHP paths. |
+| **docs** | |
+| `README.md` | Documents the new `SYMFONY_CLI_PHP_BINARY_PATH` override. |
+
+</details>
