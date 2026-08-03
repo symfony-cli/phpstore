@@ -167,44 +167,75 @@ func (s *PHPStore) discoverPHP(dir, binName string) *Version {
 func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
 	php := filepath.Join(dir, "bin", binName)
 	if runtime.GOOS == "windows" {
-		binName += ".exe"
-		php = filepath.Join(dir, binName)
+		php = filepath.Join(dir, binName+".exe")
 	}
 
-	if _, err := os.Stat(php); err != nil {
-		return nil
-	}
-
-	var buf bytes.Buffer
-	cmd := exec.Command(php, "--version")
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
-	if err := cmd.Run(); err != nil {
-		s.log(`  Unable to run "%s --version: %s"`, php, err)
-		return nil
-	}
-	r := regexp.MustCompile(`PHP (\d+\.\d+\.\d+)`)
-	data := r.FindSubmatch(buf.Bytes())
-	if data == nil {
-		s.log("  %s is not a PHP binary", php)
-		return nil
-	}
-	php = filepath.Clean(php)
-	var err error
-	php, err = evalSymlinks(php)
+	version, err := s.inspectPHPBinary(php, dir, binName, true)
 	if err != nil {
-		s.log("  %s is not a valid symlink", php)
+		s.log("  %s", err)
 		return nil
+	}
+
+	return version
+}
+
+func (s *PHPStore) discoverPHPPath(php string) (*Version, error) {
+	if !filepath.IsAbs(php) {
+		return nil, errors.Errorf("php binary path must be absolute, got %q", php)
+	}
+
+	resolved, err := evalSymlinks(filepath.Clean(php))
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to resolve PHP binary %q", php)
+	}
+
+	dir := filepath.Dir(resolved)
+	binName := filepath.Base(resolved)
+	discoverCompanions := false
+	if runtime.GOOS == "windows" {
+		if extension := filepath.Ext(binName); strings.EqualFold(extension, ".exe") {
+			binName = binName[:len(binName)-len(extension)]
+		}
+		discoverCompanions = strings.Contains(binName, "php")
+	} else if filepath.Base(dir) == "bin" {
+		dir = filepath.Dir(dir)
+		discoverCompanions = strings.Contains(binName, "php")
+	}
+
+	return s.inspectPHPBinary(php, dir, binName, discoverCompanions)
+}
+
+func (s *PHPStore) inspectPHPBinary(php, dir, binName string, discoverCompanions bool) (*Version, error) {
+	if _, err := os.Stat(php); err != nil {
+		return nil, errors.Wrapf(err, "unable to access PHP binary %q", php)
+	}
+
+	output, err := s.phpVersionOutput(php)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to run %q", php+" --version")
+	}
+	data := regexp.MustCompile(`PHP (\d+\.\d+\.\d+)`).FindSubmatch(output)
+	if data == nil {
+		return nil, errors.Errorf("path %q is not a PHP binary", php)
+	}
+
+	resolved, err := evalSymlinks(filepath.Clean(php))
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to resolve PHP binary %q", php)
 	}
 	v := s.validateVersion(dir, normalizeVersion(string(data[1])))
 	if v == nil {
-		return nil
+		return nil, errors.Errorf("unable to parse PHP version %q", data[1])
 	}
 	version := &Version{
 		Path:        dir,
 		Version:     v.String(),
 		FullVersion: v,
-		PHPPath:     php,
+		PHPPath:     resolved,
+	}
+	if !discoverCompanions {
+		s.log("  Found PHP: %s", version.PHPPath)
+		return version, nil
 	}
 
 	fpm := filepath.Join(dir, "sbin", strings.Replace(binName, "php", "php-fpm", 1))
@@ -217,14 +248,25 @@ func (s *PHPStore) discoverPHPViaPHP(dir, binName string) *Version {
 	phpize := filepath.Join(dir, "bin", strings.Replace(binName, "php", "phpize", 1))
 	phpdbg := filepath.Join(dir, "bin", strings.Replace(binName, "php", "phpdbg", 1))
 	if runtime.GOOS == "windows" {
-		fpm = filepath.Join(dir, strings.Replace(binName, "php", "php-fpm", 1))
-		cgi = filepath.Join(dir, strings.Replace(binName, "php", "php-cgi", 1))
-		phpconfig = filepath.Join(dir, strings.Replace(binName, "php", "php-config", 1))
-		phpize = filepath.Join(dir, strings.Replace(binName, "php", "phpize", 1))
-		phpdbg = filepath.Join(dir, strings.Replace(binName, "php", "phpdbg", 1))
+		fpm = filepath.Join(dir, strings.Replace(binName, "php", "php-fpm", 1)+".exe")
+		cgi = filepath.Join(dir, strings.Replace(binName, "php", "php-cgi", 1)+".exe")
+		phpconfig = filepath.Join(dir, strings.Replace(binName, "php", "php-config", 1)+".exe")
+		phpize = filepath.Join(dir, strings.Replace(binName, "php", "phpize", 1)+".exe")
+		phpdbg = filepath.Join(dir, strings.Replace(binName, "php", "phpdbg", 1)+".exe")
 	}
 	s.log(version.setServer(fpm, cgi, phpconfig, phpize, phpdbg))
-	return version
+
+	return version, nil
+}
+
+func runPHPVersion(php string) ([]byte, error) {
+	var buf bytes.Buffer
+	cmd := exec.Command(php, "--version")
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	err := cmd.Run()
+
+	return buf.Bytes(), err
 }
 
 func (s *PHPStore) discoverPHPViaPHPConfig(dir, binName string) *Version {
